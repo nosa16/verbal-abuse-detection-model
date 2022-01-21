@@ -1,0 +1,50 @@
+import string
+import pandas as pd
+import numpy as np
+from nltk.corpus import stopwords
+
+train = pd.read_csv('train.csv')
+train.head()
+
+sum(train['label'] == 1)            #checking the amount of verbal abuse sentences
+sum(train['label'] == 0)            #checking the amount of non-verbal abuse sentences
+
+train.isnull().sum()
+train.isnull().values.any()
+
+def stop_wordss(wordss):
+    no_punct = ''
+    for char in wordss:                                #removing punctuations
+        if char not in string.punctuation:
+            no_punct = no_punct + char
+    no_punct.split()
+    
+    correct_sentence = ''
+    for word in no_punct.split():
+        if word.lower() not in stopwords.words('english'):
+            correct_sentence = correct_sentence + word
+    return(correct_sentence)
+
+train['tweet'].head().apply(stop_wordss)
+
+X_features = train['tweet']
+Y_label = train['label']
+
+from sklearn.model_selection import train_test_split
+
+x_train,x_test,y_train,y_test = train_test_split(X_features, Y_label,test_size = 0.3, random_state = 1)
+
+from sklearn.feature_extraction.text import CountVectorizer
+vectorizer = CountVectorizer(stop_words = 'english').fit(x_train,y_train)
+
+
+x_train_transform = vectorizer.transform(x_train)
+x_test_transform = vectorizer.transform(x_test)
+
+from sklearn import svm
+clss = svm.SVC(kernel = 'linear')
+clss.fit(x_train_transform,y_train)
+pred = clss.predict(x_test_transform)
+
+from sklearn.metrics import accuracy_score
+print('The accuracy of the model is:', accuracy_score(y_test,pred)*100, '%')
